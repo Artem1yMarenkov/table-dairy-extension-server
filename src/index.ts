@@ -16,8 +16,8 @@ interface IReqBody extends RequestGenericInterface {
 const app = Fastify({
 	logger: true,
 	https: {
-		cert: fs.readFileSync("cert.pem"),
-		key: fs.readFileSync("key.pem"),
+		// cert: fs.readFileSync("cert.pem"),
+		// key: fs.readFileSync("key.pem"),
 	},
 });
 
