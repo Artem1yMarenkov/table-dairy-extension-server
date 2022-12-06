@@ -1,7 +1,7 @@
 import Fastify, { RequestGenericInterface } from "fastify";
 import fs from "fs";
-import { FollowResponse, http, https } from "follow-redirects";
-import xlsx, { readFile } from "xlsx";
+import { FollowResponse, https } from "follow-redirects";
+import xlsx from "xlsx";
 import { IncomingMessage } from "webpack-dev-server";
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
@@ -21,38 +21,58 @@ const app = Fastify({
 	},
 });
 
-app.post<IReqBody>("/table", async (req, res) => {
-	const { link, cookie } = req.body;
+app.post<IReqBody>("/table", async (req) => {
+	const { link } = req.body;
+	const cookie = req.headers["cookie"];
 	const url = new URL(link);
 
 	const fileName = `${cookie}-${new Date()}.xls`;
 	const file = fs.createWriteStream(fileName);
 
-	const response = await new Promise<IncomingMessage & FollowResponse>(
+	const downloadFile = await new Promise<IncomingMessage & FollowResponse>(
 		(resolve, reject) => {
-			https.get(
+			const response = https.get(
 				{
-					hostname: url.hostname,
-					pathname: url.pathname,
+					host: url.hostname,
+					path: url.pathname,
 					headers: {
 						cookie: req.headers["cookie"],
-						"User-Agent": req.headers["user-agent"],
+						"user-agent": req.headers["user-agent"],
 					},
-				},
-				(response) => {
-					resolve(response);
+					followRedirects: false
 				}
 			);
+
+			response.on("response", (response) => {
+				resolve(response as IncomingMessage & FollowResponse);
+			});
+
+			response.on("error", (err) => {
+				reject(err);
+			})
 		}
 	);
 
-	response.pipe(file);
-	file.close();
+	await new Promise((resolve, reject) => {
+		const pipeFile = downloadFile.pipe(file);
+
+		pipeFile.on("finish", () => {
+			file.close();
+			resolve(true);
+		});
+
+		pipeFile.on("error", (err) => {
+			reject(err);
+		});
+	});
+
 
 	const xlsFile = xlsx.read(fs.readFileSync(fileName));
 	const worksheet = xlsFile.Sheets["Выписка оценок"];
 
 	const html = xlsx.utils.sheet_to_html(worksheet);
+
+	fs.unlinkSync(fileName);
 
 	return {
 		status: 200,
