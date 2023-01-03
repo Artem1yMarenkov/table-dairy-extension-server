@@ -1,7 +1,8 @@
 version: "3.9"
 services:
   # Nodejs App 
-  nodejs:
+  app:
+    container_name: "server-dairy-ext-nodejs"
     build: .
     ports:
       - "5500:5500"
@@ -9,8 +10,9 @@ services:
       - .:/usr/src/app
   # nginx
   nginx:
+    container_name: "server-dairy-ext-nginx"
     depends_on:
-      - "nodejs"
+      - "server-dairy-ext-nodejs"
     image: nginx:latest
     ports:
     - "80:80"
