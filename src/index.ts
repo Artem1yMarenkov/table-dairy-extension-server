@@ -1,4 +1,4 @@
-import Fastify, { RequestGenericInterface } from "fastify";
+import Fastify, { FastifyRequest, RequestGenericInterface } from "fastify";
 import cors from '@fastify/cors'
 import fs from "fs";
 import { FollowResponse, https } from "follow-redirects";
@@ -28,10 +28,16 @@ app.register(cors, {
 	}
 });
 
+app.addHook("onRequest", (req, res, done) => {
+	req.headers['Content-Type'] = 'application/json';
+	done();
+})
+
 app.post<IReqBody>("/table", async (req, res) => {
-	const body = JSON.parse(req.body as any);
+	const body = req.body;
+
 	const link = body?.link;
-	const cookie = 'X1_SSO=6395fab07dc36919e4c2a3c0; PHPSESSID=84a11274fe6b3a50bc0b7ca5ad21d6f4';
+	const cookie = body?.cookie;
 	const url = new URL(link);
 
 	const fileName = `${cookie}-${new Date()}.xls`;
@@ -83,7 +89,7 @@ app.post<IReqBody>("/table", async (req, res) => {
 	} catch {
 		res.status(400)
 		return {
-			status: 400,
+			status: 500,
 			message: "Save File Error",
 			html: null
 		}
@@ -100,8 +106,11 @@ app.post<IReqBody>("/table", async (req, res) => {
 
 const bootstrap = async () => {
 	try {
-		const port = 3000;
-		app.listen({ port });
+		const port = 5500;
+		app.listen({ 
+			port: port,
+			host: "0.0.0.0"
+		});
 		console.info(`Server is running on https://localhost:${port}`);
 	} catch (error) {
 		app.log.error(error);

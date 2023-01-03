@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "scripts": {
-        "start": "nodemon ./src/index.ts",
+        "dev": "nodemon ./src/index.ts",
         "prepare": "husky install",
         "prettier": "npx run prettier *.ts"
     },
