@@ -12,7 +12,7 @@ services:
   nginx:
     container_name: "server-dairy-ext-nginx"
     depends_on:
-      - "server-dairy-ext-nodejs"
+      - "app"
     image: nginx:latest
     ports:
     - "80:80"
