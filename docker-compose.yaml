@@ -15,8 +15,16 @@ services:
       - "app"
     image: nginx:latest
     ports:
-    - "80:80"
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx:/etc/nginx
       - ./static:/var/www/static
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf/:/etc/nginx/ssl
     restart: always
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/
+      - ./certbot/conf/:/etc/letsencrypt/
